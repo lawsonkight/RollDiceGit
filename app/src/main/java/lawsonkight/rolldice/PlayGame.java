@@ -186,50 +186,6 @@ public class PlayGame extends Activity {
 
     }
 
-    private List<ArrayList<Integer>> getLegalMoves(int pointId) {
-        // Returns legal moves for a specific point and moves combination
-
-        List<ArrayList<Integer>> myLegalMoves = new ArrayList<ArrayList<Integer>>();
-        List<Integer> iterateMoves = freeMoves;
-
-        do {
-            // determine legal moves for combination of dice
-            // reverse combination on loop (if necessary)
-
-            ArrayList<Integer> moveBuilder = new ArrayList<Integer>(Arrays.asList(pointId));
-            int iteratePoint = pointId;
-
-            for (int currentMove : iterateMoves) {
-                // determine if checker can perform multiple moves at once
-
-                if (isLegalMove(iteratePoint, currentMove)) {
-                    // add legal move to list and check next move (if necessary)
-
-                    iteratePoint -= currentMove;
-                    moveBuilder.add(iteratePoint);
-
-                } else {
-
-                    break;
-                }
-
-            }
-
-            // if a new move combination was created, add to master list
-            if (moveBuilder.size() > 1) myLegalMoves.add(moveBuilder);
-
-            // reverse moves
-            List<Integer> tempMoves = new ArrayList<Integer>();
-            for (int i = iterateMoves.size() - 1; i >= 0; i--) {
-                tempMoves.add(iterateMoves.get(i));
-            }
-            iterateMoves = tempMoves;
-
-        } while (!iterateMoves.equals(freeMoves)); // run with reversed moves if combination hasn't already run
-
-        return myLegalMoves;
-    }
-
     private void setLegalStartPoints() {
 
         for (int i = 1; i <= 24; ++i) {
@@ -265,7 +221,6 @@ public class PlayGame extends Activity {
     }
 
     private List<Integer> getLegalEndPoints(int pointId) {
-        // Returns legal moves for a specific point and moves combination
 
         List<Integer> myLegalEndPoints = new ArrayList<Integer>();
 
@@ -354,12 +309,14 @@ public class PlayGame extends Activity {
 
     private void moveChecker(int startPoint, int endPoint) {
 
+        if (!isLegalMove(startPoint, endPoint - startPoint)) return;
+
         // check for capture
         List<Boolean> endPointList = gameBoardArrayList.get(endPoint);
         if (!endPointList.isEmpty() && endPointList.get(0) != isHome) {
             int barPoint = isHome ? 0 : 25;
             gameBoardArrayList.get(barPoint).add(gameBoardArrayList.get(endPoint).remove(0));
-            // todo move checker drawable
+            // TODO move checker drawable
         }
 
         // move checker
@@ -371,8 +328,10 @@ public class PlayGame extends Activity {
         Log.d("Roll Dice", "Moves: " + freeMoves.toString());
 
         // remove move from freeMoves list
+        // TODO can crash on doubles
+        // TODO using 2/4 moves at once ends turn
         Integer moveDistance = startPoint - endPoint;
-        if (!freeMoves.remove(moveDistance)) { // todo fix crash for doubles sometimes
+        if (!freeMoves.remove(moveDistance)) {
             int i = freeMoves.remove(0) + freeMoves.remove(0);
             if (!freeMoves.isEmpty() && (i + freeMoves.remove(0) != moveDistance)) freeMoves.remove(0);
         }
@@ -405,7 +364,7 @@ public class PlayGame extends Activity {
                     v.getBackground().setColorFilter(0xFF0000FF, PorterDuff.Mode.SRC);
                     break;
                 case DragEvent.ACTION_DROP:
-                    // Dropped, reassign View to ViewGroup
+                    // TODO Determine if dropped on empty space
                     View view = (View) event.getLocalState();
                     ViewGroup owner = (ViewGroup) view.getParent();
                     owner.removeView(view);
@@ -418,33 +377,13 @@ public class PlayGame extends Activity {
 
                     break;
                 case DragEvent.ACTION_DRAG_ENDED:
-                    for (int aPOINT_ID : POINT_ID) {
-                        View aPointView = findViewById(aPOINT_ID);
-                        //aPointView.setOnDragListener(null);
-                        //aPointView.getBackground().clearColorFilter();
-                    }
+                    // Do nothing
+                    break;
                 default:
                     break;
             }
             return true;
         }
-    }
-
-    private void makeBoardDraggable() {
-
-        /* for (int aPOINT_ID : POINT_ID) {
-            findViewById(aPOINT_ID).setOnDragListener(new myDragListener());
-        }*/
-
-        for (int aHOME_CHECKER_ID : HOME_CHECKER_ID) {
-            findViewById(aHOME_CHECKER_ID).setOnTouchListener(new myTouchListener());
-
-        }
-
-        for (int aAWAY_CHECKER_ID : AWAY_CHECKER_ID) {
-            findViewById(aAWAY_CHECKER_ID).setOnTouchListener(new myTouchListener());
-        }
-
     }
 
     private void createGameBoard() {
@@ -519,31 +458,8 @@ public class PlayGame extends Activity {
         }
 
         if (checkerStart > 0 && checkerStart < 25 && checkerEnd >= 0 && checkerEnd <= 25) {
-            movePiece(checkerStart, checkerEnd);
-        }
-
-    }
-
-    private void movePiece(int checkerStart, int checkerEnd) {
-
-        //todo eliminate this function
-
-        CharSequence text = "Point is empty";
-        Context context = getApplicationContext();
-
-        if (!gameBoardArrayList.get(checkerStart).isEmpty()) {
-
             moveChecker(checkerStart, checkerEnd);
-
-
-            text = "Remaining moves: " + freeMoves.toString();
-
-
         }
-
-        int duration = Toast.LENGTH_SHORT;
-        Toast toast = Toast.makeText(context, text, duration);
-        toast.show();
 
     }
 
