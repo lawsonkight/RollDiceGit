@@ -502,7 +502,9 @@ public class PlayGame extends Activity {
 
     private void movePiece(int checkerStart, int checkerEnd) {
 
-        int moveDistance = checkerStart - checkerEnd; // todo int vs Integer
+        //todo eliminate this function
+
+        int moveDistance = checkerStart - checkerEnd;
 
         //List<Integer> myMoves = myPlayer[currentPlayer].getMoves();
 
