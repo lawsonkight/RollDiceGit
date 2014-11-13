@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">OMG Android</string>
+    <string name="action_settings">Settings</string>
+    <string name="button_roll_dice">Roll</string>
+    <string name="button_start_game">Start Game</string>
+    <string name="hint">name</string>
+    <string name="game_board_default">[ . . . . . . ] [ . . . . . . ] [ . . . . . . ] [ . . . . . . ]</string>
+    <string name="player_home_header">Player 1</string>
+    <string name="player_away_header">Player 2</string>
+    <string name="title_activity_play_game">Play Game</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="move_piece_header">Move piece</string>
+    <string name="button_move_piece">Move</string>
+
+</resources>
