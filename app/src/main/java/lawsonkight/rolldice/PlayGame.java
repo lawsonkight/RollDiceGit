@@ -309,9 +309,11 @@ public class PlayGame extends Activity {
 
     private void moveChecker(int startPoint, int endPoint) {
 
-        if (!isLegalMove(startPoint, endPoint - startPoint)) return;
+        // TODO check that move is legal
+        //if (!isLegalMove(startPoint, endPoint - startPoint)) return;
 
         // check for capture
+        // TODO check for captures from multiple moves
         List<Boolean> endPointList = gameBoardArrayList.get(endPoint);
         if (!endPointList.isEmpty() && endPointList.get(0) != isHome) {
             int barPoint = isHome ? 0 : 25;
