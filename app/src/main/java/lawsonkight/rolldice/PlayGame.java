@@ -99,9 +99,12 @@ public class PlayGame extends Activity {
     ));
 
     private ArrayList<ArrayList<Boolean>> gameBoardArrayList;
+    //private int[] gameBoardArray = {0,2,0,0,0,0,-5,0,-3,0,0,0,5,-5,0,0,0,3,0,5,0,0,0,0,-2,0}; todo reverse gameboard representation & math
+    private int[] gameBoardArray = {0,-2,0,0,0,0,5,0,3,0,0,0,-5,5,0,0,0,-3,0,-5,0,0,0,0,2,0};
 
     private List<Integer> freeMoves = new ArrayList<Integer>();
-    private List<Integer> myMoves = new ArrayList<Integer>();
+    private List<Integer> myLegalStartPoints = new ArrayList<Integer>();
+    private List<Integer> myLegalEndPoints = new ArrayList<Integer>();
 
     private TextView playerNameTextView;
     private String[] playerNameString = new String[NUMBER_OF_PLAYERS];
@@ -133,7 +136,7 @@ public class PlayGame extends Activity {
         dieTextView[0] = (TextView) findViewById(R.id.die_text_view1);
         dieTextView[1] = (TextView) findViewById(R.id.die_text_view2);
 
-        createGameBoard();
+        //createGameBoard();
         createPlayers();
 
     }
@@ -192,8 +195,9 @@ public class PlayGame extends Activity {
 
         for (int i = 1; i <= 24; ++i) {
 
-            List<Boolean> aPoint = gameBoardArrayList.get(i);
-            boolean isMyPoint = !aPoint.isEmpty() && aPoint.get(0) == isHome;
+            //List<Boolean> aPoint = gameBoardArrayList.get(i);
+            //boolean isMyPoint = !aPoint.isEmpty() && aPoint.get(0) == isHome;
+            boolean isMyPoint = (isHome && gameBoardArray[i] > 0 || !isHome && gameBoardArray[i] < 0);
 
             View v = findViewById(POINT_ID.get(i - 1));
 
@@ -215,6 +219,42 @@ public class PlayGame extends Activity {
                     View nextChild = ((ViewGroup)v).getChildAt(j);
                     nextChild.setOnTouchListener(null);
                 }
+
+            }
+
+        }
+
+    }
+
+    private void setLegalMoves() {
+
+        for (int i = 0; i <= 25; ++i) {
+
+            //List<Boolean> aPoint = gameBoardArrayList.get(i);
+
+            int absMultiplier = isHome ? 1: -1;
+
+            //if(aPoint.isEmpty()) continue;
+            if (gameBoardArray[i] == 0) continue;
+
+            //boolean isMyPoint = aPoint.get(0) == isHome;
+
+            if (isMyPoint(i) && !getLegalEndPoints(i).isEmpty()) {
+                // I own, and have legal options
+
+                myLegalStartPoints.add(i);
+
+                for (int j = 0; j < gameBoardArray[i] * absMultiplier; j++) {
+                    // do something for each of my checkers
+                }
+
+            } else if (gameBoardArray[i] * absMultiplier < 2) {
+
+                //myOpponentPoints.add(i);
+
+            } else {
+
+                //myOpponentBlots.add(i);
 
             }
 
@@ -270,14 +310,21 @@ public class PlayGame extends Activity {
 
     }
 
+    private boolean isMyPoint(int i) {
+        i = gameBoardArray[i];
+        return (isHome && i > 0 || !isHome && i < 0);
+    }
+
     private boolean isLegalMove(int startPoint, int currentMove) {
 
         int endPoint = startPoint - currentMove;
 
         if(endPoint > 0 && endPoint < 25) {
 
-            List<Boolean> endPointList = gameBoardArrayList.get(endPoint);
-            return endPointList.isEmpty() || (endPointList.get(0) == isHome) || endPointList.size() <= 1;
+            //List<Boolean> endPointList = gameBoardArrayList.get(endPoint);
+            //return endPointList.isEmpty() || (endPointList.get(0) == isHome) || endPointList.size() <= 1;
+            int temp = gameBoardArray[endPoint];
+            return isMyPoint(endPoint) || temp > -2 && temp < 2;
 
         } else {
 
@@ -285,7 +332,8 @@ public class PlayGame extends Activity {
             int playDirection = isHome ? 1 : -1;
 
             for (int i = startPoint + playDirection; i <= currentBar; i += playDirection) {
-                if (!gameBoardArrayList.get(i).isEmpty() && gameBoardArrayList.get(i).get(0) == isHome) return false;
+                //if (!gameBoardArrayList.get(i).isEmpty() && gameBoardArrayList.get(i).get(0) == isHome) return false;
+                if (isMyPoint(i)) return false;
             }
 
             return hasAllCheckersHome();
@@ -299,7 +347,8 @@ public class PlayGame extends Activity {
         final int[] nonHomeRange = isHome ? new int[]{7, 25} : new int[]{0, 18};
 
         for (int i = nonHomeRange[0]; i < nonHomeRange[1]; ++i) {
-            if (gameBoardArrayList.get(i).contains(isHome)) return false;
+            //if (gameBoardArrayList.get(i).contains(isHome)) return false;
+            if (isMyPoint(i)) return false;
         }
 
         return true;
@@ -333,17 +382,29 @@ public class PlayGame extends Activity {
 
         if (!isLegalMove(startPoint, moveDistance)) return;
 
-        // check for capture
+        /* check for capture
         // TODO don't allow ambiguous moves
         List<Boolean> endPointList = gameBoardArrayList.get(endPoint);
         if (!endPointList.isEmpty() && endPointList.get(0) != isHome) {
             int barPoint = isHome ? 0 : 25;
             gameBoardArrayList.get(barPoint).add(gameBoardArrayList.get(endPoint).remove(0));
+        } */
+
+        int currentDirection = isHome ? 1 : -1;
+
+        if (gameBoardArray[endPoint] != 0 && !isMyPoint(endPoint)) {
+            int barPoint = isHome ? 0 : 25;
+            gameBoardArray[endPoint] -= currentDirection;
+            gameBoardArray[barPoint] += currentDirection;
             // TODO move checker drawable
         }
 
         // move checker
-        gameBoardArrayList.get(endPoint).add(gameBoardArrayList.get(startPoint).remove(0));
+        //gameBoardArrayList.get(endPoint).add(gameBoardArrayList.get(startPoint).remove(0));
+        currentDirection = isHome ? 1 : -1;
+        gameBoardArray[endPoint] += currentDirection;
+        gameBoardArray[startPoint] -= currentDirection;
+
 
         // remove move(s) from freeMoves list
         if (!freeMoves.remove(moveDistance)) {
@@ -360,7 +421,13 @@ public class PlayGame extends Activity {
     }
 
     private void setGameBoardText() {
-        gameBoardTextView.setText(gameBoardArrayList.toString());
+
+        String temp = "{";
+        for (int i : gameBoardArray) temp += i + ",";
+        temp += "}";
+
+        gameBoardTextView.setText(temp);
+
     }
 
     class myDragListener implements View.OnDragListener {
