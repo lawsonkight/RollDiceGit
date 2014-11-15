@@ -32,11 +32,6 @@ public class PlayGame extends Activity {
 
     private boolean containsDraggable = false;
 
-    private static final int SIZE_OF_BOARD = 26;
-    private static final int NUMBER_OF_CHECKERS = 15;
-    private static final int[] HOME_START_POSITION = {6,6,6,6,6, 8,8,8, 13,13,13,13,13, 24,24};
-    private static final int[] AWAY_START_POSITION = {19,19,19,19,19, 17,17,17, 12,12,12,12,12, 1,1};
-
     private static final List<Integer> POINT_ID = Collections.unmodifiableList(Arrays.asList(
             R.id.point_1,
             R.id.point_2,
@@ -136,7 +131,6 @@ public class PlayGame extends Activity {
         dieTextView[0] = (TextView) findViewById(R.id.die_text_view1);
         dieTextView[1] = (TextView) findViewById(R.id.die_text_view2);
 
-        //createGameBoard();
         createPlayers();
 
     }
@@ -195,13 +189,11 @@ public class PlayGame extends Activity {
 
         for (int i = 1; i <= 24; ++i) {
 
-            //List<Boolean> aPoint = gameBoardArrayList.get(i);
-            //boolean isMyPoint = !aPoint.isEmpty() && aPoint.get(0) == isHome;
-            boolean isMyPoint = (isHome && gameBoardArray[i] > 0 || !isHome && gameBoardArray[i] < 0);
+            //boolean isMyPoint = (isHome && gameBoardArray[i] > 0 || !isHome && gameBoardArray[i] < 0);
 
             View v = findViewById(POINT_ID.get(i - 1));
 
-            if(isMyPoint && !getLegalEndPoints(i).isEmpty()) {
+            if(isMyPoint(i) && !getLegalEndPoints(i).isEmpty()) {
 
                 v.getBackground().setColorFilter(0xFF00FFFF, PorterDuff.Mode.SRC);
 
@@ -321,8 +313,6 @@ public class PlayGame extends Activity {
 
         if(endPoint > 0 && endPoint < 25) {
 
-            //List<Boolean> endPointList = gameBoardArrayList.get(endPoint);
-            //return endPointList.isEmpty() || (endPointList.get(0) == isHome) || endPointList.size() <= 1;
             int temp = gameBoardArray[endPoint];
             return isMyPoint(endPoint) || temp > -2 && temp < 2;
 
@@ -331,10 +321,8 @@ public class PlayGame extends Activity {
             int currentBar = isHome ? 25 : 0;
             int playDirection = isHome ? 1 : -1;
 
-            for (int i = startPoint + playDirection; i <= currentBar; i += playDirection) {
-                //if (!gameBoardArrayList.get(i).isEmpty() && gameBoardArrayList.get(i).get(0) == isHome) return false;
+            for (int i = startPoint + playDirection; i <= currentBar; i += playDirection)
                 if (isMyPoint(i)) return false;
-            }
 
             return hasAllCheckersHome();
 
@@ -346,10 +334,8 @@ public class PlayGame extends Activity {
 
         final int[] nonHomeRange = isHome ? new int[]{7, 25} : new int[]{0, 18};
 
-        for (int i = nonHomeRange[0]; i < nonHomeRange[1]; ++i) {
-            //if (gameBoardArrayList.get(i).contains(isHome)) return false;
+        for (int i = nonHomeRange[0]; i < nonHomeRange[1]; ++i)
             if (isMyPoint(i)) return false;
-        }
 
         return true;
     }
@@ -382,16 +368,11 @@ public class PlayGame extends Activity {
 
         if (!isLegalMove(startPoint, moveDistance)) return;
 
-        /* check for capture
         // TODO don't allow ambiguous moves
-        List<Boolean> endPointList = gameBoardArrayList.get(endPoint);
-        if (!endPointList.isEmpty() && endPointList.get(0) != isHome) {
-            int barPoint = isHome ? 0 : 25;
-            gameBoardArrayList.get(barPoint).add(gameBoardArrayList.get(endPoint).remove(0));
-        } */
 
         int currentDirection = isHome ? 1 : -1;
 
+        // check for capture
         if (gameBoardArray[endPoint] != 0 && !isMyPoint(endPoint)) {
             int barPoint = isHome ? 0 : 25;
             gameBoardArray[endPoint] -= currentDirection;
@@ -400,8 +381,6 @@ public class PlayGame extends Activity {
         }
 
         // move checker
-        //gameBoardArrayList.get(endPoint).add(gameBoardArrayList.get(startPoint).remove(0));
-        currentDirection = isHome ? 1 : -1;
         gameBoardArray[endPoint] += currentDirection;
         gameBoardArray[startPoint] -= currentDirection;
 
@@ -468,24 +447,6 @@ public class PlayGame extends Activity {
             }
             return true;
         }
-    }
-
-    private void createGameBoard() {
-
-        gameBoardArrayList = new ArrayList<ArrayList<Boolean>>();
-        for(int i = 0; i < SIZE_OF_BOARD; ++i) {
-            gameBoardArrayList.add(new ArrayList<Boolean>());
-        }
-
-        for (int i = 0; i < NUMBER_OF_CHECKERS; ++i) {
-
-            gameBoardArrayList.get(HOME_START_POSITION[i]).add(true);
-            gameBoardArrayList.get(AWAY_START_POSITION[i]).add(false);
-
-        }
-
-        setGameBoardText();
-
     }
 
     private void createPlayers() {
