@@ -30,6 +30,8 @@ public class PlayGame extends Activity {
     private static final int NUMBER_OF_DICE = 2;
     private static final int NUMBER_OF_SIDES = 6;
 
+    private boolean containsDraggable = false;
+
     private static final int SIZE_OF_BOARD = 26;
     private static final int NUMBER_OF_CHECKERS = 15;
     private static final int[] HOME_START_POSITION = {6,6,6,6,6, 8,8,8, 13,13,13,13,13, 24,24};
@@ -167,7 +169,7 @@ public class PlayGame extends Activity {
                 view.setVisibility(View.INVISIBLE);
 
                 View parentView = (View) view.getParent();
-                startPoint = POINT_ID.indexOf(parentView.getId()) + 1;
+                int startPoint = POINT_ID.indexOf(parentView.getId()) + 1;
 
                 // Color legal end points
                 List<Integer> myLegalEndPoints = getLegalEndPoints(startPoint);
@@ -232,37 +234,33 @@ public class PlayGame extends Activity {
 
             for (int i = 0; i < 2; ++i) {
 
+                // todo break if (capture for move1 || move 2) && move1 != move2
+
                 if (isLegalMove(pointId, freeMoves.get(i))) {
-                    Log.d("Roll Dice", pointId + " + " + freeMoves.get(i) + " is LEGAL");
+
                     myLegalEndPoints.add(pointId - freeMoves.get(i));
 
-                    if (isLegalMove(pointId, combinedRoll) && !myLegalEndPoints.contains(pointId - combinedRoll)) {
-
-                        Log.d("Roll Dice", pointId + " + " + freeMoves.get(0) + " + " + freeMoves.get(1) +  " is LEGAL");
+                    if (isLegalMove(pointId, combinedRoll) && !myLegalEndPoints.contains(pointId - combinedRoll))
                         myLegalEndPoints.add(pointId - combinedRoll);
 
-                    } else Log.d("Roll Dice", pointId + " + " + freeMoves.get(0) + " + " + freeMoves.get(1) +  " is NOT LEGAL");
+                }
 
-                } else Log.d("Roll Dice", pointId + " + " + freeMoves.get(i) + " is NOT LEGAL");
+                // todo if only two endPoints exist with only a single start checker for both, eliminate smaller endPoint
 
             }
 
         } else {
+
+            // todo break if not enough pieces exist to use all doubles (especially when bearing off)
 
             for (int i = 1; i <= freeMoves.size(); ++i) {
                 int combinedRoll = freeMoves.get(0) * i;
 
                 if (isLegalMove(pointId, combinedRoll)) {
 
-                    Log.d("Roll Dice", pointId + " + " + (freeMoves.get(0) * i) + " is LEGAL");
                     myLegalEndPoints.add(pointId - combinedRoll);
 
-                } else {
-
-                    Log.d("Roll Dice", pointId + " + " + (freeMoves.get(0) * i) + " is NOT LEGAL");
-                    break;
-
-                }
+                } else break;
 
             }
 
@@ -307,10 +305,33 @@ public class PlayGame extends Activity {
         return true;
     }
 
+    private void moveChecker(View checkerView, View endView) {
+
+        // todo understand what happens when endView doesn't exist
+
+        View startView = (View) checkerView.getParent();
+
+        int startPoint = POINT_ID.indexOf(startView.getId()) + 1;
+        int endPoint = POINT_ID.indexOf(endView.getId()) + 1;
+
+        Integer moveDistance = startPoint - endPoint;
+        if (!isLegalMove(startPoint, moveDistance)) return;
+
+        moveChecker (startPoint, endPoint);
+
+        ViewGroup owner = (ViewGroup) startView;
+        owner.removeView(checkerView);
+        LinearLayout container = (LinearLayout) endView;
+        container.addView(checkerView);
+        checkerView.setVisibility(View.VISIBLE);
+
+    }
+
     private void moveChecker(int startPoint, int endPoint) {
 
-        // TODO check that move is legal
-        //if (!isLegalMove(startPoint, endPoint - startPoint)) return;
+        Integer moveDistance = startPoint - endPoint;
+
+        if (!isLegalMove(startPoint, moveDistance)) return;
 
         // check for capture
         // TODO don't allow ambiguous moves
@@ -324,25 +345,17 @@ public class PlayGame extends Activity {
         // move checker
         gameBoardArrayList.get(endPoint).add(gameBoardArrayList.get(startPoint).remove(0));
 
-        setGameBoardText();
-
-        Log.d("Roll Dice", "Start: " + startPoint + ", End: " + endPoint);
-        Log.d("Roll Dice", "Moves: " + freeMoves.toString());
-
-        // remove move from freeMoves list
-        // TODO can crash on doubles
-        // TODO using 2/4 moves at once ends turn
-        Integer moveDistance = startPoint - endPoint;
+        // remove move(s) from freeMoves list
         if (!freeMoves.remove(moveDistance)) {
             int i = freeMoves.remove(0) + freeMoves.remove(0);
-            if (!freeMoves.isEmpty() && (i + freeMoves.remove(0) != moveDistance)) freeMoves.remove(0);
+            while (i != moveDistance) i += freeMoves.remove(0);
         }
 
-        setLegalStartPoints();
-
-        Log.d("Roll Dice", "Updated Moves: " + freeMoves.toString());
+        setGameBoardText();
 
         if (freeMoves.isEmpty()) nextTurn();
+
+        setLegalStartPoints();
 
     }
 
@@ -355,6 +368,7 @@ public class PlayGame extends Activity {
         @Override
         public boolean onDrag(View v, DragEvent event) {
             int action = event.getAction();
+
             switch (action) {
                 case DragEvent.ACTION_DRAG_STARTED:
                     // Do nothing
@@ -366,20 +380,21 @@ public class PlayGame extends Activity {
                     v.getBackground().setColorFilter(0xFF0000FF, PorterDuff.Mode.SRC);
                     break;
                 case DragEvent.ACTION_DROP:
-                    // TODO Determine if dropped on empty space
+                    /*
                     View view = (View) event.getLocalState();
                     ViewGroup owner = (ViewGroup) view.getParent();
                     owner.removeView(view);
                     LinearLayout container = (LinearLayout) v;
                     container.addView(view);
                     view.setVisibility(View.VISIBLE);
+                    */
 
-                    endPoint = POINT_ID.indexOf(v.getId()) + 1;
-                    moveChecker(startPoint, endPoint);
+                    View view = (View) event.getLocalState();
+                    moveChecker(view, v);
 
                     break;
                 case DragEvent.ACTION_DRAG_ENDED:
-                    // Do nothing
+                    // todo understand how to not lose checkers when dropped outside a drop target
                     break;
                 default:
                     break;
@@ -418,6 +433,8 @@ public class PlayGame extends Activity {
 
     public void rollDiceClick(View view) {
 
+        // todo invoke on swipe
+
         freeMoves.clear();
         Random r = new Random();
 
@@ -425,13 +442,13 @@ public class PlayGame extends Activity {
 
             int myRoll = r.nextInt(NUMBER_OF_SIDES) + 1;
             freeMoves.add(myRoll * (isHome ? 1 : -1));
+
             dieTextView[i].setText(String.valueOf(myRoll));
 
         }
 
         if (freeMoves.get(0).equals(freeMoves.get(1))) freeMoves.addAll(freeMoves);
 
-        // make legal points/checkers draggable
         setLegalStartPoints();
 
         rollDiceButton.setEnabled(false);
@@ -440,6 +457,8 @@ public class PlayGame extends Activity {
     }
 
     public void movePieceClick(View view) {
+
+        // todo eliminate
 
         TextView checkerStartLocationTextView = (TextView) findViewById(R.id.checker_start_location);
         TextView checkerEndLocationTextView = (TextView) findViewById(R.id.checker_end_location);
