@@ -1,5 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/linear_layout_wrapper"
+    android:id="@+id/playgame_wrapper"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
 
