@@ -33,6 +33,7 @@ public class PlayGame extends Activity {
     private boolean containsDraggable = false;
 
     private static final List<Integer> POINT_ID = Collections.unmodifiableList(Arrays.asList(
+            R.id.bar,
             R.id.point_1,
             R.id.point_2,
             R.id.point_3,
@@ -56,7 +57,8 @@ public class PlayGame extends Activity {
             R.id.point_21,
             R.id.point_22,
             R.id.point_23,
-            R.id.point_24
+            R.id.point_24,
+            R.id.bar
     ));
     private static final List<Integer> HOME_CHECKER_ID = Collections.unmodifiableList(Arrays.asList(
             R.id.home_1,
@@ -164,12 +166,12 @@ public class PlayGame extends Activity {
                 view.setVisibility(View.INVISIBLE);
 
                 View parentView = (View) view.getParent();
-                int startPoint = POINT_ID.indexOf(parentView.getId()) + 1;
+                int startPoint = POINT_ID.indexOf(parentView.getId());
 
                 // Color legal end points
                 List<Integer> myLegalEndPoints = getLegalEndPoints(startPoint);
                 for (int aLegalEndPoint : myLegalEndPoints) {
-                    int pointId = POINT_ID.get(aLegalEndPoint - 1);
+                    int pointId = POINT_ID.get(aLegalEndPoint);
                     View v = findViewById(pointId);
                     v.setOnDragListener(new myDragListener());
                     v.getBackground().setColorFilter(0xFF0000FF, PorterDuff.Mode.SRC);
@@ -187,7 +189,7 @@ public class PlayGame extends Activity {
 
         for (int i = 1; i <= 24; ++i) {
 
-            View v = findViewById(POINT_ID.get(i - 1));
+            View v = findViewById(POINT_ID.get(i));
 
             if(isMyPoint(i) && !getLegalEndPoints(i).isEmpty()) {
 
@@ -217,7 +219,7 @@ public class PlayGame extends Activity {
     private void clearColorFilters() {
 
         for (int i = 1; i <= 24; ++i) {
-            View v = findViewById(POINT_ID.get(i - 1));
+            View v = findViewById(POINT_ID.get(i));
             v.setOnDragListener(null);
             v.getBackground().clearColorFilter();
 
@@ -352,13 +354,24 @@ public class PlayGame extends Activity {
 
     private void moveChecker(View checkerView, View endView) {
 
+        // todo capture being terminated due to 'non-legal' move to bar
+
+        Log.d("Roll Dice", "Vz1: " + endView.toString());
+
         View startView = (View) checkerView.getParent();
 
-        int startPoint = POINT_ID.indexOf(startView.getId()) + 1;
-        int endPoint = POINT_ID.indexOf(endView.getId()) + 1;
+        int startPoint = POINT_ID.indexOf(startView.getId());
+        int endPoint = POINT_ID.indexOf(endView.getId());
+
+
 
         Integer moveDistance = startPoint - endPoint;
+
+        Log.d("Roll Dice", "Vz2: " + endView.toString());
+
         if (!isLegalMove(startPoint, moveDistance)) return;
+
+        Log.d("Roll Dice", "Vz3: " + endView.toString());
 
         /* capture!
         if (gameBoardArray[endPoint] != 0 && !isMyPoint(endPoint)) {
@@ -369,7 +382,12 @@ public class PlayGame extends Activity {
             moveChecker (capturedChecker, barView);
         }*/
 
+        Log.d("Roll Dice", "Vz4: " + endView.toString());
+
         moveChecker (startPoint, endPoint);
+
+        Log.d("Roll Dice", "Viz: " + checkerView.toString());
+        Log.d("Roll Dice", "Viz: " + endView.toString());
 
         ViewGroup owner = (ViewGroup) startView;
         owner.removeView(checkerView);
@@ -396,12 +414,12 @@ public class PlayGame extends Activity {
 
             //if (endPoint <= 0 || endPoint >= 25) return; // todo handle edge case better
 
-            View capturedChecker = ((ViewGroup) findViewById(POINT_ID.get(endPoint - 1))).getChildAt(0);
-            View captureView = findViewById(POINT_ID.get(endPoint - 1));
+            View capturedChecker = ((ViewGroup) findViewById(POINT_ID.get(endPoint))).getChildAt(0);
+            View captureView = findViewById(POINT_ID.get(endPoint));
             View barView = findViewById(R.id.bar);
 
-            Log.d("Roll Dice", capturedChecker.toString());
-            Log.d("Roll Dice", barView.toString());
+            Log.d("Roll Dice", "Dat: " + capturedChecker.toString());
+            Log.d("Roll Dice", "Dat: " + barView.toString());
 
             moveChecker (capturedChecker, barView);
 
