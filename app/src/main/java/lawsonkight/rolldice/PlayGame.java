@@ -58,7 +58,7 @@ public class PlayGame extends Activity {
             R.id.point_23,
             R.id.point_24
     ));
-    /*private static final List<Integer> HOME_CHECKER_ID = Collections.unmodifiableList(Arrays.asList(
+    private static final List<Integer> HOME_CHECKER_ID = Collections.unmodifiableList(Arrays.asList(
             R.id.home_1,
             R.id.home_2,
             R.id.home_3,
@@ -91,10 +91,10 @@ public class PlayGame extends Activity {
             R.id.away_13,
             R.id.away_14,
             R.id.away_15
-    ));*/
+    ));
 
     private ArrayList<ArrayList<Boolean>> gameBoardArrayList;
-    //private int[] gameBoardArray = {0,2,0,0,0,0,-5,0,-3,0,0,0,5,-5,0,0,0,3,0,5,0,0,0,0,-2,0}; todo reverse gameboard representation & math?
+    //private int[] gameBoardArray = {0,2,0,0,0,0,-5,0,-3,0,0,0,5,-5,0,0,0,3,0,5,0,0,0,0,-2,0}; todo reverse gameboard representation & math
     private int[] gameBoardArray = {0,-2,0,0,0,0,5,0,3,0,0,0,-5,5,0,0,0,-3,0,-5,0,0,0,0,2,0};
 
     private List<Integer> freeMoves = new ArrayList<Integer>();
@@ -111,11 +111,7 @@ public class PlayGame extends Activity {
 
     TextView gameBoardTextView;
 
-    private int currentPlayer = 0;
     private boolean isHome = true;
-
-    private int startPoint;
-    private int endPoint;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,8 +126,6 @@ public class PlayGame extends Activity {
 
         dieTextView[0] = (TextView) findViewById(R.id.die_text_view1);
         dieTextView[1] = (TextView) findViewById(R.id.die_text_view2);
-
-        //findViewById(R.id.playgame_wrapper).setOnDragListener(new myDragListener());
 
         createPlayers();
 
@@ -234,20 +228,16 @@ public class PlayGame extends Activity {
             }
 
         }
+
     }
 
     private void setLegalMoves() {
 
         for (int i = 0; i <= 25; ++i) {
 
-            //List<Boolean> aPoint = gameBoardArrayList.get(i);
-
             int absMultiplier = isHome ? 1: -1;
 
-            //if(aPoint.isEmpty()) continue;
             if (gameBoardArray[i] == 0) continue;
-
-            //boolean isMyPoint = aPoint.get(0) == isHome;
 
             if (isMyPoint(i) && !getLegalEndPoints(i).isEmpty()) {
                 // I own, and have legal options
@@ -321,6 +311,7 @@ public class PlayGame extends Activity {
     }
 
     private boolean isMyPoint(int i) {
+        if (i < 0 || i > 24) return false;
         i = gameBoardArray[i];
         return (isHome && i > 0 || !isHome && i < 0);
     }
@@ -356,11 +347,10 @@ public class PlayGame extends Activity {
             if (isMyPoint(i)) return false;
 
         return true;
+
     }
 
     private void moveChecker(View checkerView, View endView) {
-
-        // todo understand what happens when endView doesn't exist
 
         View startView = (View) checkerView.getParent();
 
@@ -369,6 +359,15 @@ public class PlayGame extends Activity {
 
         Integer moveDistance = startPoint - endPoint;
         if (!isLegalMove(startPoint, moveDistance)) return;
+
+        /* capture!
+        if (gameBoardArray[endPoint] != 0 && !isMyPoint(endPoint)) {
+            Log.d("Roll Dice", "Capture!");
+            View capturedChecker = ((ViewGroup) findViewById(POINT_ID.get(endPoint - 1))).getChildAt(0);
+            //View captureView = findViewById(POINT_ID.get(endPoint - 1));
+            View barView = findViewById(R.id.bar);
+            moveChecker (capturedChecker, barView);
+        }*/
 
         moveChecker (startPoint, endPoint);
 
@@ -390,12 +389,22 @@ public class PlayGame extends Activity {
 
         int currentDirection = isHome ? 1 : -1;
 
-        // check for capture
+        // capture!
         if (gameBoardArray[endPoint] != 0 && !isMyPoint(endPoint)) {
-            int barPoint = isHome ? 0 : 25;
-            gameBoardArray[endPoint] -= currentDirection;
-            gameBoardArray[barPoint] += currentDirection;
-            // TODO move checker drawable
+
+            Log.d("Roll Dice", "Capture! " + endPoint);
+
+            //if (endPoint <= 0 || endPoint >= 25) return; // todo handle edge case better
+
+            View capturedChecker = ((ViewGroup) findViewById(POINT_ID.get(endPoint - 1))).getChildAt(0);
+            View captureView = findViewById(POINT_ID.get(endPoint - 1));
+            View barView = findViewById(R.id.bar);
+
+            Log.d("Roll Dice", capturedChecker.toString());
+            Log.d("Roll Dice", barView.toString());
+
+            moveChecker (capturedChecker, barView);
+
         }
 
         // move checker
@@ -433,47 +442,24 @@ public class PlayGame extends Activity {
         public boolean onDrag(View v, DragEvent event) {
             int action = event.getAction();
 
-            Log.d("Roll Dice", "drag: " + v.toString());
-
             switch (action) {
                 case DragEvent.ACTION_DRAG_STARTED:
                     // Do nothing
                     break;
                 case DragEvent.ACTION_DRAG_ENTERED:
-                    //if (v != findViewById(R.id.playgame_wrapper))
-                        v.getBackground().setColorFilter(0xFF00FF00, PorterDuff.Mode.SRC);
-
+                    v.getBackground().setColorFilter(0xFF00FF00, PorterDuff.Mode.SRC);
                     break;
                 case DragEvent.ACTION_DRAG_EXITED:
                     v.getBackground().setColorFilter(0xFF0000FF, PorterDuff.Mode.SRC);
                     break;
                 case DragEvent.ACTION_DROP:
-                    /*
-                    View view = (View) event.getLocalState();
-                    ViewGroup owner = (ViewGroup) view.getParent();
-                    owner.removeView(view);
-                    LinearLayout container = (LinearLayout) v;
-                    container.addView(view);
-                    view.setVisibility(View.VISIBLE);
-                    */
-                    View viewDrop = (View) event.getLocalState();
-                    Log.d("Roll Dice", "drop: " + viewDrop.toString());
-
-
+                    View dropView = (View) event.getLocalState();
+                    moveChecker(dropView, v);
                     break;
                 case DragEvent.ACTION_DRAG_ENDED:
-                    // todo understand how to not lose checkers when dropped outside a drop target
-                    View view = (View) event.getLocalState();
-
-                    if (event.getResult()) {
-                        Log.d("Roll Dice", "end1: " + view.toString());
-                        Log.d("Roll Dice", "end2: " + v.toString());
-                        moveChecker(view, v);
-                    } else {
-                        view.setVisibility(View.VISIBLE);
-                        setLegalStartPoints();
-                    }
-
+                    View endView = (View) event.getLocalState();
+                    endView.setVisibility(View.VISIBLE);
+                    setLegalStartPoints();
                     break;
                 default:
                     break;
@@ -488,7 +474,7 @@ public class PlayGame extends Activity {
         playerNameString = intent.getStringArrayExtra(MainActivity.EXTRA_PLAYER_NAME);
 
         playerNameTextView = (TextView) findViewById(R.id.player_home_header);
-        playerNameTextView.setText(playerNameString[currentPlayer]);
+        playerNameTextView.setText(playerNameString[0]);
 
     }
 
@@ -519,7 +505,7 @@ public class PlayGame extends Activity {
 
     public void movePieceClick(View view) {
 
-        // todo eliminate
+        // todo eliminate?
 
         TextView checkerStartLocationTextView = (TextView) findViewById(R.id.checker_start_location);
         TextView checkerEndLocationTextView = (TextView) findViewById(R.id.checker_end_location);
@@ -547,8 +533,8 @@ public class PlayGame extends Activity {
 
     private void nextTurn() {
 
-        currentPlayer = (currentPlayer == 0) ? 1 : 0;
         isHome = !isHome;
+        int currentPlayer = isHome ? 0 : 1;
 
         rollDiceButton.setEnabled(true);
         movePieceButton.setEnabled(false);
