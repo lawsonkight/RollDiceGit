@@ -267,11 +267,12 @@
 
     </LinearLayout>
 
-    <View
+    <LinearLayout
         android:id="@+id/bar"
         android:layout_width="28dp"
         android:layout_height="match_parent"
         android:background="#999999"
+        android:orientation="vertical"
         />
 
     <LinearLayout
