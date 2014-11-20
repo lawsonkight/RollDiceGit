@@ -30,8 +30,6 @@ public class PlayGame extends Activity {
     private static final int NUMBER_OF_DICE = 2;
     private static final int NUMBER_OF_SIDES = 6;
 
-    private boolean containsDraggable = false;
-
     private static final List<Integer> POINT_ID = Collections.unmodifiableList(Arrays.asList(
             R.id.bar,
             R.id.point_1,
@@ -60,7 +58,7 @@ public class PlayGame extends Activity {
             R.id.point_24,
             R.id.bar
     ));
-    private static final List<Integer> HOME_CHECKER_ID = Collections.unmodifiableList(Arrays.asList(
+    /*private static final List<Integer> HOME_CHECKER_ID = Collections.unmodifiableList(Arrays.asList(
             R.id.home_1,
             R.id.home_2,
             R.id.home_3,
@@ -93,9 +91,8 @@ public class PlayGame extends Activity {
             R.id.away_13,
             R.id.away_14,
             R.id.away_15
-    ));
+    ));*/
 
-    private ArrayList<ArrayList<Boolean>> gameBoardArrayList;
     //private int[] gameBoardArray = {0,2,0,0,0,0,-5,0,-3,0,0,0,5,-5,0,0,0,3,0,5,0,0,0,0,-2,0}; todo reverse gameboard representation & math
     private int[] gameBoardArray = {0,-2,0,0,0,0,5,0,3,0,0,0,-5,5,0,0,0,-3,0,-5,0,0,0,0,2,0};
 
@@ -165,10 +162,9 @@ public class PlayGame extends Activity {
                 view.startDrag(data, shadowBuilder, view, 0);
                 view.setVisibility(View.INVISIBLE);
 
-                View parentView = (View) view.getParent();
-                int startPoint = POINT_ID.indexOf(parentView.getId());
-
                 // Color legal end points
+                View startView = (View) view.getParent();
+                int startPoint = getStartPoint(startView.getId());
                 List<Integer> myLegalEndPoints = getLegalEndPoints(startPoint);
                 for (int aLegalEndPoint : myLegalEndPoints) {
                     int pointId = POINT_ID.get(aLegalEndPoint);
@@ -185,19 +181,22 @@ public class PlayGame extends Activity {
 
     }
 
+    private int getStartPoint(int i) {
+        int startPoint = POINT_ID.indexOf(i);
+        if (startPoint == 0 && isHome) startPoint = 25;
+        return startPoint;
+    }
+
     private void setLegalStartPoints() {
 
-        if (isHome && gameBoardArray[25] > 0 || !isHome && gameBoardArray[0] > 0) {
+        clearColorFilters();
+
+        if (isHome && gameBoardArray[25] > 0 || !isHome && gameBoardArray[0] < 0) {
 
             View v = findViewById(POINT_ID.get(isHome ? 25 : 0));
+            // todo bar does not have background drawable
             v.getBackground().setColorFilter(0xFF00FFFF, PorterDuff.Mode.SRC);
-
-            setCheckerTouchListener(v, new myTouchListener());
-
-            /*for (int j = 0; j < ((ViewGroup) v).getChildCount(); j++) {
-                View nextChild = ((ViewGroup)v).getChildAt(j);
-                nextChild.setOnTouchListener(new myTouchListener());
-            }*/
+            setCheckerTouchListeners(v, new myTouchListener());
 
         } else {
 
@@ -208,29 +207,9 @@ public class PlayGame extends Activity {
                 if (isMyPoint(i) && !getLegalEndPoints(i).isEmpty()) {
 
                     v.getBackground().setColorFilter(0xFF00FFFF, PorterDuff.Mode.SRC);
+                    setCheckerTouchListeners(v, new myTouchListener());
 
-                    setCheckerTouchListener(v, new myTouchListener());
-
-                    /*for (int j = 0; j < ((ViewGroup) v).getChildCount(); j++) {
-                        View nextChild = ((ViewGroup) v).getChildAt(j);
-                        nextChild.setOnTouchListener(new myTouchListener());
-                    }*/
-
-                    myTouchListener x = new myTouchListener();
-
-                } else {
-
-                    v.setOnDragListener(null);
-                    v.getBackground().clearColorFilter();
-
-                    setCheckerTouchListener(v, null);
-
-                    /*for (int j = 0; j < ((ViewGroup) v).getChildCount(); j++) {
-                        View nextChild = ((ViewGroup) v).getChildAt(j);
-                        nextChild.setOnTouchListener(null);
-                    }*/
-
-                }
+                } // else clearColorFilters(v);
 
             }
 
@@ -238,7 +217,7 @@ public class PlayGame extends Activity {
 
     }
 
-    private void setCheckerTouchListener(View v, myTouchListener touchListener) {
+    private void setCheckerTouchListeners(View v, myTouchListener touchListener) {
 
         ViewGroup vg = (ViewGroup) v;
 
@@ -250,20 +229,13 @@ public class PlayGame extends Activity {
     }
 
     private void clearColorFilters() {
+        for (int i = 0; i <= 25; ++i) clearColorFilters(findViewById(POINT_ID.get(i)));
+    }
 
-        for (int i = 1; i <= 24; ++i) {
-            View v = findViewById(POINT_ID.get(i));
-            v.setOnDragListener(null);
-            v.getBackground().clearColorFilter();
-
-            for (int j = 0; j < ((ViewGroup) v).getChildCount(); j++) {
-                View nextChild = ((ViewGroup)v).getChildAt(j);
-                nextChild.getBackground().clearColorFilter();
-                nextChild.setOnTouchListener(null);
-            }
-
-        }
-
+    private void clearColorFilters(View v) {
+        v.setOnDragListener(null);
+        v.getBackground().clearColorFilter();
+        setCheckerTouchListeners(v, null);
     }
 
     private void setLegalMoves() {
@@ -301,9 +273,11 @@ public class PlayGame extends Activity {
 
         List<Integer> myLegalEndPoints = new ArrayList<Integer>();
 
-        if (freeMoves.size() == 0) return myLegalEndPoints;
+        if (freeMoves.size() == 0) {
 
-        if (freeMoves.size() == 2) {
+            return myLegalEndPoints;
+
+        } else if (freeMoves.size() == 2) {
 
             int combinedRoll = freeMoves.get(0) + freeMoves.get(1);
 
@@ -365,7 +339,7 @@ public class PlayGame extends Activity {
             int currentBar = isHome ? 25 : 0;
             int playDirection = isHome ? 1 : -1;
 
-            for (int i = startPoint + playDirection; i <= currentBar; i += playDirection)
+            for (int i = startPoint - playDirection; i <= currentBar; i += playDirection)
                 if (isMyPoint(i)) return false;
 
             return hasAllCheckersHome();
@@ -388,7 +362,7 @@ public class PlayGame extends Activity {
     private void requestMove(View checkerView, View endView) {
 
         View startView = (View) checkerView.getParent();
-        int startPoint = POINT_ID.indexOf(startView.getId());
+        int startPoint = getStartPoint(startView.getId());
         int endPoint = POINT_ID.indexOf(endView.getId());
 
         requestMove(checkerView, startView, endView, startPoint, endPoint);
@@ -411,7 +385,7 @@ public class PlayGame extends Activity {
 
         if (gameBoardArray[endPoint] != 0 && !isMyPoint(endPoint)) {
 
-            int opponentBar = isHome ? 25 : 0;
+            int opponentBar = isHome ? 0 : 25;
 
             View capturedChecker = ((ViewGroup) endView).getChildAt(0);
             View barView = findViewById(POINT_ID.get(opponentBar));
@@ -422,25 +396,29 @@ public class PlayGame extends Activity {
 
         makeMove(checkerView, startView, endView, startPoint, endPoint);
 
-        // todo allow undo
+        // update remaining moves
         Integer moveDistance = startPoint - endPoint;
         if (!freeMoves.remove(moveDistance)) {
             int i = freeMoves.remove(0) + freeMoves.remove(0);
             while (i != moveDistance) i += freeMoves.remove(0);
         }
 
-        if (freeMoves.isEmpty()) nextTurn();
-
-        setLegalStartPoints();
+        // update board
+        if (freeMoves.isEmpty()) {
+            nextTurn();
+        } else {
+            setLegalStartPoints();
+        }
 
     }
 
     private void makeMove(View checkerView, View startView, View endView, int startPoint, int endPoint) {
 
         // move data
-        int currentDirection = isHome ? 1 : -1;
-        gameBoardArray[endPoint] += currentDirection;
-        gameBoardArray[startPoint] -= currentDirection;
+        int currentPlayer = isHome ? 1 : -1;
+        if (endPoint == 0 || endPoint == 25) currentPlayer *= -1;
+        gameBoardArray[endPoint] += currentPlayer;
+        gameBoardArray[startPoint] -= currentPlayer;
         setGameBoardText(); // todo remove?
 
         // move graphics
@@ -545,21 +523,21 @@ public class PlayGame extends Activity {
 
         // checkerEndLocationTextView.addTextChangedListener(watch);
 
-        if(checkerStartLocationString.matches("\\d+")) {
+        if(checkerStartLocationString.matches("\\d+"))
             checkerStart = Integer.parseInt(checkerStartLocationString);
-        }
-        if(checkerEndLocationString.matches("\\d+")) {
-            checkerEnd = Integer.parseInt(checkerEndLocationString);
-        }
 
-        if (checkerStart > 0 && checkerStart < 25 && checkerEnd >= 0 && checkerEnd <= 25) {
-            //moveChecker(checkerStart, checkerEnd);
+        if(checkerEndLocationString.matches("\\d+"))
+            checkerEnd = Integer.parseInt(checkerEndLocationString);
+
+        // todo doesn't allow bar moves
+        if (checkerStart > 0 && checkerStart < 25 && checkerEnd >= 0 && checkerEnd <= 25)
             requestMove(checkerStart, checkerEnd);
-        }
 
     }
 
     private void nextTurn() {
+
+        clearColorFilters();
 
         isHome = !isHome;
         int currentPlayer = isHome ? 0 : 1;
