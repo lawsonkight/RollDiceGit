@@ -97,14 +97,13 @@ public class PlayGame extends Activity {
     private int[] gameBoardArray = {0,-2,0,0,0,0,5,0,3,0,0,0,-5,5,0,0,0,-3,0,-5,0,0,0,0,2,0};
 
     private List<Integer> freeMoves = new ArrayList<Integer>();
-    private List<Integer> myLegalStartPoints = new ArrayList<Integer>();
-    private List<Integer> myLegalEndPoints = new ArrayList<Integer>();
+    //private List<Integer> myLegalStartPoints = new ArrayList<Integer>();
+    //private List<Integer> myLegalEndPoints = new ArrayList<Integer>();
 
     private TextView playerNameTextView;
     private String[] playerNameString = new String[NUMBER_OF_PLAYERS];
 
     private Button rollDiceButton;
-    private Button movePieceButton;
 
     private TextView[] dieTextView = new TextView[NUMBER_OF_DICE];
 
@@ -116,8 +115,6 @@ public class PlayGame extends Activity {
         setContentView(R.layout.activity_play_game);
 
         rollDiceButton = (Button) findViewById(R.id.button_roll_dice);
-        movePieceButton = (Button) findViewById(R.id.button_move_piece);
-        movePieceButton.setEnabled(false);
 
         dieTextView[0] = (TextView) findViewById(R.id.die_text_view1);
         dieTextView[1] = (TextView) findViewById(R.id.die_text_view2);
@@ -187,26 +184,33 @@ public class PlayGame extends Activity {
 
         clearColorFilters();
 
-        if (isHome && gameBoardArray[25] > 0 || !isHome && gameBoardArray[0] < 0) {
+        List<Integer> legalStartPoints = getLegalStartPoints();
 
-            View v = findViewById(POINT_ID.get(isHome ? 25 : 0));
+        if (legalStartPoints.size() == 0) {
+            nextTurn(); // todo this should actually just wait for player to pick up dice
+            return;
+        }
+
+        int bar = isHome ? 25 : 0;
+
+        if (legalStartPoints.get(0) == bar) {
+
+            View v = findViewById(POINT_ID.get(bar));
             // todo bar does not have background drawable
             v.getBackground().setColorFilter(0xFF00FFFF, PorterDuff.Mode.SRC);
             setCheckerTouchListeners(v, new myTouchListener());
 
-        } else {
+            return;
 
-            for (int i = 1; i <= 24; ++i) {
+        }
 
-                View v = findViewById(POINT_ID.get(i));
+        for (int i : legalStartPoints) {
 
-                if (isMyPoint(i) && !getLegalEndPoints(i).isEmpty()) {
+            View v = findViewById(POINT_ID.get(i));
 
-                    v.getBackground().setColorFilter(0xFF00FFFF, PorterDuff.Mode.SRC);
-                    setCheckerTouchListeners(v, new myTouchListener());
-
-                } // else clearColorFilters(v);
-
+            if (isMyPoint(i) && hasLegalEndPoints(i)) {
+                v.getBackground().setColorFilter(0xFF00FFFF, PorterDuff.Mode.SRC);
+                setCheckerTouchListeners(v, new myTouchListener());
             }
 
         }
@@ -234,35 +238,11 @@ public class PlayGame extends Activity {
         setCheckerTouchListeners(v, null);
     }
 
-    private void setLegalMoves() {
-
-        for (int i = 0; i <= 25; ++i) {
-
-            int absMultiplier = isHome ? 1: -1;
-
-            if (gameBoardArray[i] == 0) continue;
-
-            if (isMyPoint(i) && !getLegalEndPoints(i).isEmpty()) {
-                // I own, and have legal options
-
-                myLegalStartPoints.add(i);
-
-                for (int j = 0; j < gameBoardArray[i] * absMultiplier; j++) {
-                    // do something for each of my checkers
-                }
-
-            } else if (gameBoardArray[i] * absMultiplier < 2) {
-
-                //myOpponentPoints.add(i);
-
-            } else {
-
-                //myOpponentBlots.add(i);
-
-            }
-
+    private boolean hasLegalEndPoints(int pointId) {
+        for(int i : freeMoves) {
+            if (isLegalMove(pointId, i)) return true;
         }
-
+        return false;
     }
 
     private List<Integer> getLegalEndPoints(int pointId) {
@@ -275,24 +255,21 @@ public class PlayGame extends Activity {
 
         } else if (freeMoves.size() == 2) {
 
-            int combinedRoll = freeMoves.get(0) + freeMoves.get(1);
+            int[] move = new int[2];
+            int[] endPoint = new int[2];
 
-            for (int i = 0; i < 2; ++i) {
-
-                // todo break if (capture for move1 || move 2) && move1 != move2
-
-                if (isLegalMove(pointId, freeMoves.get(i))) {
-
-                    myLegalEndPoints.add(pointId - freeMoves.get(i));
-
-                    if (isLegalMove(pointId, combinedRoll) && !myLegalEndPoints.contains(pointId - combinedRoll))
-                        myLegalEndPoints.add(pointId - combinedRoll);
-
-                }
-
-                // todo if only two endPoints exist with only a single start checker for both, eliminate smaller endPoint
-
+            for (int i = 0; i < 2; i++) {
+                move[i] = freeMoves.get(i);
+                endPoint[i] = pointId - move[i];
+                if (isLegalMove(pointId, move[i]))
+                    myLegalEndPoints.add(pointId - move[i]);
             }
+
+            int combinedMove = pointId - (move[0] + move[1]);
+            if (!isOpponentBlot(endPoint[0]) && !isOpponentBlot(endPoint[1]) && !isOpponentPoint(combinedMove))
+                myLegalEndPoints.add(combinedMove);
+
+            // todo if only two endPoints exist with only a single start checker for both, eliminate smaller endPoint
 
         } else {
 
@@ -316,9 +293,11 @@ public class PlayGame extends Activity {
     }
 
     private boolean isMyPoint(int i) {
-        if (i < 0 || i > 24) return false;
-        i = gameBoardArray[i];
-        return (isHome && i > 0 || !isHome && i < 0);
+        return (!(i < 1 || i > 24)) && (isHome && gameBoardArray[i] > 0 || !isHome && gameBoardArray[i] < 0);
+    }
+
+    private boolean isOpponentPoint(int i) {
+        return (!(i < 1 || i > 24)) && (isHome && gameBoardArray[i] < 0 || !isHome && gameBoardArray[i] > 0);
     }
 
     private boolean isLegalMove(int startPoint, int currentMove) {
@@ -346,13 +325,12 @@ public class PlayGame extends Activity {
 
     private boolean hasAllCheckersHome() {
 
-        final int[] nonHomeRange = isHome ? new int[]{7, 25} : new int[]{0, 18};
+        int[] nonHomeRange = isHome ? new int[]{7, 25} : new int[]{0, 18};
 
         for (int i = nonHomeRange[0]; i < nonHomeRange[1]; ++i)
             if (isMyPoint(i)) return false;
 
         return true;
-
     }
 
     private void requestMove(View checkerView, View endView) {
@@ -375,11 +353,16 @@ public class PlayGame extends Activity {
 
     }
 
+    private boolean isOpponentBlot(int point) {
+        return (!(point < 1 || point > 24)) && (isHome ? gameBoardArray[point] == -1 : gameBoardArray[point] == 1);
+    }
+
     private void requestMove(View checkerView, View startView, View endView, int startPoint, int endPoint) {
 
         if (!isLegalMove(startPoint, startPoint - endPoint)) return;
 
-        if (gameBoardArray[endPoint] != 0 && !isMyPoint(endPoint)) {
+        // check for capture
+        if (isOpponentBlot(endPoint)) {
 
             int opponentBar = isHome ? 0 : 25;
 
@@ -484,36 +467,94 @@ public class PlayGame extends Activity {
 
         }
 
+        //List<Integer> myLegalStartPoints = getLegalStartPoints();
+
         if (freeMoves.get(0).equals(freeMoves.get(1))) freeMoves.addAll(freeMoves);
 
         setLegalStartPoints();
 
         rollDiceButton.setEnabled(false);
-        movePieceButton.setEnabled(true);
 
+    }
+
+    public int[] rollDice() {
+        Random r = new Random();
+        return new int[]{r.nextInt(6) + 1, r.nextInt(6) + 1};
+    }
+
+    public List<Integer> buildFreeMoves(int[] myRoll) {
+        List<Integer> myFreeMoves = new ArrayList<Integer>();
+
+        //freeMoves.add(myRoll * (isHome ? 1 : -1));
+        if (freeMoves.get(0).equals(freeMoves.get(1))) freeMoves.addAll(freeMoves);
+
+        List<Integer> myLegalStartPoints = getLegalStartPoints();
+        List<Integer> myLegalEndPoints = new ArrayList<Integer>();
+
+
+
+        return myFreeMoves;
+    }
+
+    public List<Integer> getLegalStartPoints() {
+
+        List<Integer> myLegalStartPoints = new ArrayList<Integer>();
+
+        if (isCaptured()) {
+            int bar = isHome ? 25 : 0;
+            if (hasLegalEndPoints(bar))
+                myLegalStartPoints.add(bar);
+            return myLegalStartPoints;
+        }
+
+        for (int i = 1; i < 25; i++)
+            if (hasLegalEndPoints(i))
+                myLegalStartPoints.add(i);
+
+        return myLegalStartPoints;
+
+    }
+
+    public boolean isCaptured() {
+        return isHome && gameBoardArray[25] > 0 || !isHome && gameBoardArray[0] < 0;
     }
 
     private void nextTurn() {
 
         clearColorFilters();
-
         isHome = !isHome;
-        int currentPlayer = isHome ? 0 : 1;
 
-        rollDiceButton.setEnabled(true);
-        movePieceButton.setEnabled(false);
+        if (isCaptured()) {
 
-        playerNameTextView.setText(playerNameString[currentPlayer]);
+            boolean canEnterBoard = false;
+            int opponentHomeStart = isHome ? 19 : 1;
+            int opponentHomeEnd = isHome ? 24 : 6;
+
+            for (int i = opponentHomeStart; i <= opponentHomeEnd; i++) {
+                if (!isOpponentPoint(i)) {
+                    canEnterBoard = true;
+                    break;
+                }
+            }
+
+            if (!canEnterBoard) isHome = !isHome;
+
+        }
+
         for(TextView tv : dieTextView) tv.setText("");
+        rollDiceButton.setEnabled(true);
 
+        playerNameTextView.setText(playerNameString[isHome ? 0 : 1]);
+        CharSequence cs = playerNameTextView.getText() + "'s Turn";
+        showToast(cs);
+
+    }
+
+    private void showToast(CharSequence cs) {
         Context context = getApplicationContext();
-
-        CharSequence text = playerNameString[currentPlayer] + "'s Turn";
-
         int duration = Toast.LENGTH_SHORT;
-        Toast toast = Toast.makeText(context, text, duration);
+        Toast toast = Toast.makeText(context, cs, duration);
         toast.show();
-
     }
 
 }
