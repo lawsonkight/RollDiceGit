@@ -108,8 +108,6 @@ public class PlayGame extends Activity {
 
     private TextView[] dieTextView = new TextView[NUMBER_OF_DICE];
 
-    TextView gameBoardTextView;
-
     private boolean isHome = true;
 
     @Override
@@ -120,8 +118,6 @@ public class PlayGame extends Activity {
         rollDiceButton = (Button) findViewById(R.id.button_roll_dice);
         movePieceButton = (Button) findViewById(R.id.button_move_piece);
         movePieceButton.setEnabled(false);
-
-        gameBoardTextView = (TextView) findViewById(R.id.game_board_text_view);
 
         dieTextView[0] = (TextView) findViewById(R.id.die_text_view1);
         dieTextView[1] = (TextView) findViewById(R.id.die_text_view2);
@@ -419,7 +415,6 @@ public class PlayGame extends Activity {
         if (endPoint == 0 || endPoint == 25) currentPlayer *= -1;
         gameBoardArray[endPoint] += currentPlayer;
         gameBoardArray[startPoint] -= currentPlayer;
-        setGameBoardText(); // todo remove?
 
         // move graphics
         ViewGroup owner = (ViewGroup) startView;
@@ -427,16 +422,6 @@ public class PlayGame extends Activity {
         LinearLayout container = (LinearLayout) endView;
         container.addView(checkerView);
         checkerView.setVisibility(View.VISIBLE);
-
-    }
-
-    private void setGameBoardText() {
-
-        String temp = "{";
-        for (int i : gameBoardArray) temp += i + ",";
-        temp += "}";
-
-        gameBoardTextView.setText(temp);
 
     }
 
@@ -505,33 +490,6 @@ public class PlayGame extends Activity {
 
         rollDiceButton.setEnabled(false);
         movePieceButton.setEnabled(true);
-
-    }
-
-    public void movePieceClick(View view) {
-
-        // todo eliminate?
-
-        TextView checkerStartLocationTextView = (TextView) findViewById(R.id.checker_start_location);
-        TextView checkerEndLocationTextView = (TextView) findViewById(R.id.checker_end_location);
-
-        String checkerStartLocationString = checkerStartLocationTextView.getText().toString();
-        String checkerEndLocationString = checkerEndLocationTextView.getText().toString();
-
-        int checkerStart = 0;
-        int checkerEnd = 0;
-
-        // checkerEndLocationTextView.addTextChangedListener(watch);
-
-        if(checkerStartLocationString.matches("\\d+"))
-            checkerStart = Integer.parseInt(checkerStartLocationString);
-
-        if(checkerEndLocationString.matches("\\d+"))
-            checkerEnd = Integer.parseInt(checkerEndLocationString);
-
-        // todo doesn't allow bar moves
-        if (checkerStart > 0 && checkerStart < 25 && checkerEnd >= 0 && checkerEnd <= 25)
-            requestMove(checkerStart, checkerEnd);
 
     }
 

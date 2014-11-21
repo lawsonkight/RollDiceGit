@@ -1,7 +1,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/playgame_wrapper"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
 
     android:orientation="vertical"
     >
@@ -9,7 +9,8 @@
     <LinearLayout
         android:id="@+id/dice_tray"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="64dp"
+        >
 
     <TextView
         android:id="@+id/player_home_header"
@@ -46,82 +47,9 @@
 
     </LinearLayout>
 
-
-
-    <TextView
-        android:id="@+id/game_board_text_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/game_board_default" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:orientation="vertical">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/move_piece_header" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            >
-
-            <EditText
-                android:id="@+id/checker_start_location"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:digits="0,1,2,3,4,5,6,7,8,9"
-                android:inputType="number|textNoSuggestions"
-                android:hint="start" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"
-                android:text="to"
-                />
-
-            <EditText
-                android:id="@+id/checker_end_location"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:digits="0,1,2,3,4,5,6,7,8,9"
-                android:inputType="number|textNoSuggestions"
-                android:hint="end" />
-
-            <Button
-                android:id="@+id/button_move_piece"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/button_move_piece"
-                android:onClick="movePieceClick"
-                />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-
-
-        </LinearLayout>
-
-    </LinearLayout>
-
     <include
-            android:id="@+id/game_board"
-            layout="@layout/gameboard"
+        android:id="@+id/game_board"
+        layout="@layout/gameboard"
     />
 
 </LinearLayout>
